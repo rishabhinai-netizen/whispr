@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1a0a2e"/>
+      <stop offset="100%" stop-color="#2d1060"/>
+    </linearGradient>
+    <linearGradient id="icon" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f093c0"/>
+      <stop offset="100%" stop-color="#b47aee"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="120" fill="url(#bg)"/>
+  <!-- Chat bubble shape -->
+  <path d="M140 160 Q140 130 170 130 L342 130 Q372 130 372 160 L372 270 Q372 300 342 300 L220 300 L175 340 L175 300 L170 300 Q140 300 140 270 Z" fill="url(#icon)" opacity="0.95"/>
+  <!-- Three dots -->
+  <circle cx="210" cy="215" r="18" fill="#1a0a2e"/>
+  <circle cx="256" cy="215" r="18" fill="#1a0a2e"/>
+  <circle cx="302" cy="215" r="18" fill="#1a0a2e"/>
+</svg>
