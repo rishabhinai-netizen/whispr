@@ -788,6 +788,14 @@ html, body {
         </div>
         <div class="settings-row-val">Edit →</div>
       </div>
+      <div class="settings-row" onclick="editBotToken()">
+        <div class="settings-row-icon">🤖</div>
+        <div class="settings-row-info">
+          <div class="settings-row-label">Telegram Bot Token</div>
+          <div class="settings-row-sub" id="settings-bot-status">Not set</div>
+        </div>
+        <div class="settings-row-val">Edit →</div>
+      </div>
     </div>
     <div class="settings-section">
       <div class="settings-row">
@@ -816,8 +824,8 @@ html, body {
 // ─── CONFIG ───────────────────────────────────────────────────────────────────
 const SUPABASE_URL = 'https://pqhipbnjkbhlguvrjcah.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBxaGlwYm5qa2JobGd1dnJqY2FoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE2NzczOTksImV4cCI6MjA4NzI1MzM5OX0.rc8lzztYF0ThUN0ikNzI-e086-Gfzuk3Uwj72gHNwVk';
-// Telegram Bot Token — replace with your actual bot token from @BotFather
-const TG_BOT_TOKEN = 'YOUR_TELEGRAM_BOT_TOKEN_HERE';
+// Telegram Bot Token — stored in localStorage, set via Settings
+let TG_BOT_TOKEN = localStorage.getItem('whispr_tg_bot_token') || '';
 const APP_VERSION = '1.0.0';
 
 // ─── STATE ────────────────────────────────────────────────────────────────────
@@ -981,6 +989,7 @@ function updateChatHeader() {
   document.getElementById('settings-username').textContent = '@' + currentUser.username;
   const tgEl = document.getElementById('settings-tg-status');
   tgEl.textContent = currentUser.telegram_chat_id ? '✓ Connected (ID: ' + currentUser.telegram_chat_id + ')' : 'Not connected — tap to set up';
+  updateBotStatusDisplay();
 }
 
 // ─── FETCH & RENDER MESSAGES ──────────────────────────────────────────────────
@@ -1359,6 +1368,21 @@ function editTelegramId() {
   closeSettings();
   document.getElementById('telegram-id-input').value = currentUser.telegram_chat_id || '';
   showScreen('setup');
+}
+
+function editBotToken() {
+  const token = prompt('Enter your Telegram Bot Token from @BotFather:', TG_BOT_TOKEN);
+  if (token !== null) {
+    TG_BOT_TOKEN = token.trim();
+    localStorage.setItem('whispr_tg_bot_token', TG_BOT_TOKEN);
+    updateBotStatusDisplay();
+    toast(TG_BOT_TOKEN ? 'Bot token saved ✓' : 'Bot token cleared');
+  }
+}
+
+function updateBotStatusDisplay() {
+  const el = document.getElementById('settings-bot-status');
+  if (el) el.textContent = TG_BOT_TOKEN ? '✓ Token set (' + TG_BOT_TOKEN.slice(0,8) + '…)' : 'Not set — tap to add';
 }
 
 function handleLogout() {
