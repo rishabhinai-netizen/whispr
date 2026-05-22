@@ -861,7 +861,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     try {
       currentUser = JSON.parse(saved);
       // Refresh from DB
-      const { data } = await sb.from('whispr.users').select('*').eq('id', currentUser.id).single();
+      const { data } = await sb.from('w_users').select('*').eq('id', currentUser.id).single();
       if (data) {
         currentUser = data;
         localStorage.setItem('whispr_user', JSON.stringify(currentUser));
@@ -903,17 +903,17 @@ async function handleLogin() {
 
     if (isRegistering) {
       // Check username taken
-      const { data: existing } = await sb.schema('whispr').from('users').select('id').eq('username', username).single();
+      const { data: existing } = await sb.from('w_users').select('id').eq('username', username).single();
       if (existing) { showLoginError('Username already taken.'); return; }
 
       const displayName = username.charAt(0).toUpperCase() + username.slice(1);
-      const { data, error } = await sb.schema('whispr').from('users').insert({
+      const { data, error } = await sb.from('w_users').insert({
         username, display_name: displayName, passcode_hash: hash
       }).select().single();
       if (error) throw error;
       currentUser = data;
     } else {
-      const { data, error } = await sb.schema('whispr').from('users').select('*').eq('username', username).single();
+      const { data, error } = await sb.from('w_users').select('*').eq('username', username).single();
       if (error || !data) { showLoginError('User not found.'); return; }
       if (data.passcode_hash !== hash) { showLoginError('Incorrect passcode.'); return; }
       currentUser = data;
@@ -942,7 +942,7 @@ async function saveTelegramId() {
   const chatId = document.getElementById('telegram-id-input').value.trim();
   if (!chatId) { toast('Please enter your Chat ID'); return; }
 
-  await sb.schema('whispr').from('users').update({ telegram_chat_id: chatId }).eq('id', currentUser.id);
+  await sb.from('w_users').update({ telegram_chat_id: chatId }).eq('id', currentUser.id);
   currentUser.telegram_chat_id = chatId;
   localStorage.setItem('whispr_user', JSON.stringify(currentUser));
   await loadChat();
@@ -957,7 +957,7 @@ async function skipTelegram() {
 // ─── LOAD CHAT ────────────────────────────────────────────────────────────────
 async function loadChat() {
   // Load all users except self to find peer
-  const { data: users } = await sb.schema('whispr').from('users').select('*').neq('id', currentUser.id);
+  const { data: users } = await sb.from('w_users').select('*').neq('id', currentUser.id);
   allUsers = users || [];
 
   // Update header with peer info
@@ -994,7 +994,7 @@ function updateChatHeader() {
 
 // ─── FETCH & RENDER MESSAGES ──────────────────────────────────────────────────
 async function fetchMessages() {
-  const { data, error } = await sb.schema('whispr').from('messages')
+  const { data, error } = await sb.from('w_messages')
     .select('*')
     .eq('is_deleted', false)
     .order('created_at', { ascending: true });
@@ -1124,13 +1124,13 @@ function showBubbleActions(wrap, msg) {
 }
 
 async function toggleKeepMessage(id, keep) {
-  await sb.schema('whispr').from('messages').update({ keep_message: keep }).eq('id', id);
+  await sb.from('w_messages').update({ keep_message: keep }).eq('id', id);
   document.querySelectorAll('.bubble-actions').forEach(el => el.remove());
   await fetchMessages();
 }
 
 async function deleteMessage(id) {
-  await sb.schema('whispr').from('messages').update({ is_deleted: true }).eq('id', id);
+  await sb.from('w_messages').update({ is_deleted: true }).eq('id', id);
   document.querySelectorAll('.bubble-actions').forEach(el => el.remove());
 }
 
@@ -1154,7 +1154,7 @@ function subscribeMessages() {
   realtimeSub = sb
     .channel('whispr-messages')
     .on('postgres_changes', {
-      event: '*', schema: 'whispr', table: 'messages'
+      event: '*', schema: 'public', table: 'w_messages'
     }, handleRealtimeMessage)
     .subscribe();
 }
@@ -1194,7 +1194,7 @@ async function sendMessage() {
   input.value = '';
   autoGrow(input);
 
-  const { data, error } = await sb.schema('whispr').from('messages').insert({
+  const { data, error } = await sb.from('w_messages').insert({
     sender_id: currentUser.id,
     content: text,
     message_type: 'text',
@@ -1210,7 +1210,7 @@ async function sendMessage() {
 
 async function sendImageMessage(imageUrl, keepIt) {
   const keep = keepIt || document.getElementById('keep-toggle').checked;
-  await sb.schema('whispr').from('messages').insert({
+  await sb.from('w_messages').insert({
     sender_id: currentUser.id,
     content: '📷 Image',
     message_type: 'image',
@@ -1223,7 +1223,7 @@ async function sendImageMessage(imageUrl, keepIt) {
 
 async function sendLinkMessage(url, title) {
   const keep = document.getElementById('keep-toggle').checked;
-  await sb.schema('whispr').from('messages').insert({
+  await sb.from('w_messages').insert({
     sender_id: currentUser.id,
     content: title || url,
     message_type: 'link',
@@ -1352,7 +1352,7 @@ function autoGrow(el) {
 // ─── CLEANUP ──────────────────────────────────────────────────────────────────
 async function cleanExpiredMessages() {
   try {
-    await sb.schema('whispr').from('messages')
+    await sb.from('w_messages')
       .update({ is_deleted: true })
       .eq('keep_message', false)
       .lt('expires_at', new Date().toISOString())
